@@ -20,13 +20,18 @@ const useableRoomList = [
 // フォーム送信時
 function receivedApplication(e) {
   // フォームの送信内容の取得
-  const email = (e !== undefined) ? e.response.getRespondentEmail() : FormApp.getActiveForm().getResponses()[0].getRespondentEmail();
   const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[0].getItemResponses();
-  const group_name = responses[0].getResponse();
-  const room = responses[1].getResponse();
-  const date = Utilities.formatDate(new Date(responses[2].getResponse()), "Asia/Tokyo", "yyyy-MM-dd");
-  const start_time = responses[3].getResponse();
-  const end_time = responses[4].getResponse();
+  let rebook = 0;
+  let pre_hash = "";
+  if (responses.length == 6) {
+    rebook = 1;
+    pre_hash = responses[0].getResponse();
+  }
+  const group_name = responses[0 + rebook].getResponse();
+  const room = responses[1 + rebook].getResponse();
+  const date = Utilities.formatDate(new Date(responses[2 + rebook].getResponse()), "Asia/Tokyo", "yyyy-MM-dd");
+  const start_time = responses[3 + rebook].getResponse();
+  const end_time = responses[4 + rebook].getResponse();
 
   // 予約可能かチェック
   const results = checkAvailability(room, date, start_time, end_time);
@@ -36,20 +41,20 @@ function receivedApplication(e) {
 
   // 予約可能なら
   if (check){
+    // ハッシュ値作成
+    const time = date + " "  + start_time + "~" + end_time;
+    const hash = dataToHash(time + " " + room + " " + group_name);
+
     // 予約申請シートに予約内容を書き込む
-    addReservationApplication(email, group_name, room, date, start_time, end_time);
+    addReservationApplication(hash, group_name, room, time);
 
     // 予約状況シートの更新
     updateReserationStatus(group_name, start_time, end_time, date_index, room_index);
   }
-
-  // メール送信
-  // sendEmail(email, group_name, check);
 }
 
-function addReservationApplication(email, group_name, room, date, start_time, end_time) {
-  const time = date + " "  + start_time + "~" + end_time;
-  reservationApplication.appendRow([email, room, group_name, time]);
+function addReservationApplication(hash, group_name, room, time) {
+  reservationApplication.appendRow([hash, room, group_name, time]);
 }
 
 function updateReserationStatus(group_name, start_time, end_time, date_index, room_index) {
@@ -77,7 +82,15 @@ function checkAvailability(room, date, start_time, end_time) {
           if (list[i][j + 2] === "") {
             return [true, i + 3, j + 2 + 1];
           } else {
-            return [false, null, null];
+            let pre_start_time = Utilities.formatDate(new Date(list[i][j + 2].match(/\d\d\d\d/g)[0]), "Asia/Tokyo", "HH:mm");
+            let pre_end_time = Utilities.formatDate(new Date(list[i][j + 2].match(/\d\d\d\d/g)[1]), "Asia/Tokyo", "HH:mm");
+
+            if (pre_start_time < start_time < pre_end_time || pre_start_time < end_time < pre_end_time) {
+              return [false, null, null];
+            }
+            else {
+              return [true, i + 3, j + 2 + 1];
+            }
           }
         }
       }
@@ -85,7 +98,7 @@ function checkAvailability(room, date, start_time, end_time) {
   }
 
   // 条件が合わないならNG
-  return false; 
+  return [false, null, null];
 }
 
 function getDataOfReservationStatus(start_row, start_col) {
@@ -93,24 +106,4 @@ function getDataOfReservationStatus(start_row, start_col) {
   const last_col = reservationStatus.getMaxColumns() - start_col + 1;
   
   return reservationStatus.getRange(start_row, start_col, last_row, last_col).getValues();
-}
-
-
-function sendEmail(email, preferredDate, result){
-
-  const mailTitle = "教室使用予約完了について";
-  let mailBody;
-
-  if ( result == "OK" ){
-    mailBody = "予約が完了しました。\n"
-             + `予約日：${preferredDate}`
-  } else {
-    mailBody = "定員超過のため予約できませんでした。\n"
-             + "下記のフォームから再度申請してください\n"
-             + form.getPublishedUrl();
-  }
-
-  // 結果メール送信
-  GmailApp.sendEmail(email, mailTitle, mailBody);
-
 }
