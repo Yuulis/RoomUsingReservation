@@ -82,10 +82,12 @@ function checkAvailability(room, date, start_time, end_time) {
           if (list[i][j + 2] === "") {
             return [true, i + 3, j + 2 + 1];
           } else {
-            let pre_start_time = Utilities.formatDate(new Date(list[i][j + 2].match(/\d\d\d\d/g)[0]), "Asia/Tokyo", "HH:mm");
-            let pre_end_time = Utilities.formatDate(new Date(list[i][j + 2].match(/\d\d\d\d/g)[1]), "Asia/Tokyo", "HH:mm");
+            // 予約済みの情報を取得
+            let value = list[i][j + 2];
+            let pre_start_time = value.slice(-11, -6);
+            let pre_end_time = value.slice(-5);
 
-            if (pre_start_time < start_time < pre_end_time || pre_start_time < end_time < pre_end_time) {
+            if (start_time < pre_end_time && pre_start_time < end_time) {
               return [false, null, null];
             }
             else {
