@@ -1,3 +1,4 @@
+const form = FormApp.getActiveForm();
 const spreadSheet = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("sheet_id"));
 const reservationApplication = spreadSheet.getSheetByName("予約申請");
 const reservationStatus = spreadSheet.getSheetByName("予約状況");
@@ -18,6 +19,9 @@ const useableRoomList = [
 
 // フォーム送信時
 function receivedApplication(e) {
+  // リセット
+  form.setConfirmationMessage("");
+
   // フォームの送信内容の取得
   const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[0].getItemResponses();
   let rebook = 0;
@@ -71,14 +75,17 @@ function checkAvailability(room, date, start_time, end_time) {
           } else {
             // 予約済みの情報を取得
             let value = list[i][j + 2];
-            let pre_start_time = value.slice(-11, -6);
-            let pre_end_time = value.slice(-5);
+            let pre_reservations = value.split(/\n/);
+            for (let i = 0; i < pre_reservations.length; i++) {
+              let pre_start_time = pre_reservations[i].slice(-11, -6);
+              let pre_end_time = pre_reservations[i].slice(-5);
 
-            if (pre_end_time <= start_time || end_time <= pre_start_time) {
-              return [true, i + 3, j + 2 + 1];
-            } else {
-              return [false, null, null];
+              if (start_time < pre_end_time && pre_start_time < end_time) {
+                return [false, null, null];
+              }
             }
+
+            return [true, i + 3, j + 2 + 1];
           }
         }
       }
@@ -123,6 +130,5 @@ function updateConfirmationMessage(check, hash, group_name, room, time) {
     message = `予約を受け付けできませんでした。\n条件を変えて再度予約してください。\n`;
   }
 
-  const form = FormApp.getActiveForm();
   form.setConfirmationMessage(message);
 }
