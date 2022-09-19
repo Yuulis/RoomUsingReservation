@@ -3,6 +3,9 @@ const days = ["日", "月", "火", "水", "木", "金", "土"];
 
 // 前日分までのデータを削除して、1年後までの日付を入力
 function updateCalenderSheet() {
+  // トリガーの削除
+  delTrigger();
+
   let count = 0;
   let today = new Date(new Date().setHours(0, 0, 0, 0));
   while (true) {
