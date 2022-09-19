@@ -11,6 +11,6 @@ function delTrigger() {
   const triggers = ScriptApp.getProjectTriggers();
   
   for(const trigger of triggers){
-    if(trigger.getHandlerFunction() == "updateCalenderSheet") ScriptApp.deleteTrigger(trigger);
+    if(trigger.getHandlerFunction() === "updateCalenderSheet") ScriptApp.deleteTrigger(trigger);
   }
 }

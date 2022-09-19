@@ -1,8 +1,8 @@
 function createHash(length) {
   const source = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const hash_data = reservationApplication.getRange(2, 1, reservationApplication.getLastRow()).getValues();
+  const hash_data = RESERVATION_APPLICATION.getRange(2, 1, RESERVATION_APPLICATION.getLastRow()).getValues();
 
-  let hash = '';
+  let hash = "";
   for (let i = 0; i < length; i++) {
     hash += source[Math.floor(Math.random() * source.length)]
   }
