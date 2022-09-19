@@ -35,6 +35,7 @@ function receivedApplication(e) {
   const date = Utilities.formatDate(new Date(responses[2 + rebook].getResponse()), "Asia/Tokyo", "yyyy-MM-dd");
   const start_time = responses[3 + rebook].getResponse();
   const end_time = responses[4 + rebook].getResponse();
+  const time = date + " "  + start_time + "~" + end_time;
 
   // 予約可能かチェック
   const results = checkAvailability(room, date, start_time, end_time);
@@ -43,8 +44,7 @@ function receivedApplication(e) {
   const room_index = results[2];
 
   // ハッシュ値作成
-  const time = date + " "  + start_time + "~" + end_time;
-  const hash = dataToHash(time + " " + room + " " + group_name);
+  const hash = createHash(4);
 
   // 予約可能なら
   if (check){
