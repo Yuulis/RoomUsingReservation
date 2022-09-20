@@ -9,6 +9,7 @@ function checkReservable(room, date, start_time, end_time) {
         if (ROOM_LIST[j] === room) {
           // 希望する日時が予約されていないならOK
           if (reservations_list[i][j + 2] === "") {
+            // スプレッドシートの入力先のインデックスを返す
             return [true, i + 3, j + 2 + 1];
           } else {
             // 予約済みの情報を取得

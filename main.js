@@ -1,7 +1,3 @@
-const FORM = FormApp.getActiveForm();
-const SPREAD_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("sheet_id"));
-const RESERVATION_APPLICATION = SPREAD_SHEET.getSheetByName("予約申請");
-const RESERVATION_STATUS = SPREAD_SHEET.getSheetByName("予約状況");
 const ROOM_LIST = [
   "大会議室",
   "講堂",
@@ -15,18 +11,24 @@ const ROOM_LIST = [
   "ゼミ室",
   "講義室4",
 ];
+const SPREAD_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("sheet_id"));
+const RESERVATION_APPLICATION = SPREAD_SHEET.getSheetByName("予約申請");
+const RESERVATION_STATUS = SPREAD_SHEET.getSheetByName("予約状況");
 
 
 // フォーム送信時
 function receivedApplication(e) {
   // フォームの送信内容の取得
+  const email = (e !== undefined) ? e.response.getRespondentEmail() : FormApp.getActiveForm().getResponses()[0].getRespondentEmail();
   const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[0].getItemResponses();
+  // const email = e.response.getRespondentEmail();
   // const responses = e.response.getItemResponses();
+
   let rebook = 0;
-  let pre_hash = "";
+  let pre_code = "";
   if (responses.length == 6) {
     rebook = 1;
-    pre_hash = responses[0].getResponse();
+    pre_code = responses[0].getResponse();
   }
   const group_name = responses[0 + rebook].getResponse();
   const room = responses[1 + rebook].getResponse();
@@ -41,31 +43,30 @@ function receivedApplication(e) {
   const date_index = results[1];
   const room_index = results[2];
 
-  // ハッシュ値作成
-  const hash = createHash(4);
+  // 予約コード作成
+  const code = createCode(4);
 
   // 予約可能なら
   if (check){
     // 予約申請シートに予約内容を書き込む
-    addReservationApplication(hash, group_name, room, dateTime_str);
+    addReservationApplication(code, email, group_name, room, dateTime_str);
 
     // 予約状況シートの更新
     updateReservationStatus(group_name, start_time, end_time, date_index, room_index);
   }
 
-  // フォーム送信後のメッセージ編集
-  updateConfirmationMessage(check, hash, group_name, room, dateTime_str);
+  sendEmail(email, check, code, group_name, room, dateTime_str);
 }
 
 
-function addReservationApplication(hash, group_name, room, time) {
-  RESERVATION_APPLICATION.appendRow([hash, room, group_name, time]);
+function addReservationApplication(hash, email, group_name, room, time) {
+  RESERVATION_APPLICATION.appendRow([hash, email, room, group_name, time]);
 }
 
 
 function updateReservationStatus(group_name, start_time, end_time, date_index, room_index) {
   // 更新前のデータ取得
-  const pre_value = RESERVATION_STATUS.getRange(date_index, room_index).getValue();
+  const pre_value =　RESERVATION_STATUS.getRange(date_index, room_index).getValue();
 
   // 更新データ作成
   const time_str = start_time + "~" + end_time;
