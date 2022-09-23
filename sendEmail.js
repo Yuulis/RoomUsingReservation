@@ -1,21 +1,27 @@
-function sendEmail(email, check, hash, group_name, room, dateTime_str) {
-  const mailTitle = "教室使用の予約結果について";
+function sendEmail(email, check, rebook_flag, hash, group_name, room, dateTime_str) {
+  const recipient = email;
+  const subject = "教室使用の予約結果について";
 
-  let mailBody = "";
+  let body = "";
   if (check) {
-    mailBody += "以下の内容で予約が完了しました。\n";
-    mailBody += "予約コードは予約の変更時に必要なので、メモをしておくことをお勧めします。\n\n";
-    mailBody += "【予約内容】\n";
-    mailBody += `使用団体 : ${group_name}\n`;
-    mailBody += `使用教室 : ${room}\n`;
-    mailBody += `使用団体 : ${dateTime_str}\n\n`;
-    mailBody += "【予約コード】\n";
-    mailBody += `${hash}`;
+    body += (rebook_flag) ? "以下の内容に予約内容を変更しました。\n" : "以下の内容で予約が完了しました。\n";
+    body += "予約コードは予約の変更時に必要なので、メモをしておくことをお勧めします。\n\n";
+    body += "【予約内容】\n";
+    body += `使用団体 : ${group_name}\n`;
+    body += `使用教室 : ${room}\n`;
+    body += `使用団体 : ${dateTime_str}\n\n`;
+    body += "【予約コード】\n";
+    body += `${hash}`;
   } else {
-    mailBody += "予約を受け付けできませんでした。\nお手数ですが、条件を変えて再度予約してください。\n";
+    body += "予約を受け付けできませんでした。\nお手数ですが、条件を変えて再度予約してください。\n";
   }
 
-  let draft = GmailApp.createDraft(email, mailTitle, mailBody);
+  const fromAddress = PropertiesService.getScriptProperties().getProperty("fromAddress")
+  const options = {
+    from : fromAddress
+  };
+
+  let draft = GmailApp.createDraft(email, subject, body, options);
   let draftID = draft.getId();
 
   GmailApp.getDraft(draftID).send();

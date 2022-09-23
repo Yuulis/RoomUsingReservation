@@ -11,9 +11,12 @@ const ROOM_LIST = [
   "ゼミ室",
   "講義室4",
 ];
-const SPREAD_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("sheet_id"));
-const RESERVATION_APPLICATION = SPREAD_SHEET.getSheetByName("予約申請");
-const RESERVATION_STATUS = SPREAD_SHEET.getSheetByName("予約状況");
+const CALENDER_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("calender_sheet_id"));
+const APPLICATION_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("application_sheet_id"));
+const RECORD_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("record_sheet_id"));
+const RESERVATION_STATUS = CALENDER_SHEET.getSheetByName("予約状況");
+const RESERVATION_APPLICATION = APPLICATION_SHEET.getSheetByName("予約申請");
+const RESERVATION_RECORD = APPLICATION_SHEET.getSheetByName("履歴");
 
 
 // フォーム送信時
@@ -37,8 +40,10 @@ function receivedApplication(e) {
   const end_time = responses[4 + rebook].getResponse();
   const dateTime_str = date + " "  + start_time + "~" + end_time;
 
+  let rebook_flag = false;
   if (pre_code !== "") {
     checkCode(pre_code);
+    rebook_flag = true;
   }
 
   // 予約可能かチェック
@@ -59,7 +64,7 @@ function receivedApplication(e) {
     updateReservationStatus(group_name, start_time, end_time, date_index, room_index);
   }
 
-  sendEmail(email, check, code, group_name, room, dateTime_str);
+  sendEmail(email, check, rebook_flag, code, group_name, room, dateTime_str);
 }
 
 
