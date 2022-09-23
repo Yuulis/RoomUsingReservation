@@ -19,8 +19,8 @@ const RESERVATION_STATUS = SPREAD_SHEET.getSheetByName("予約状況");
 // フォーム送信時
 function receivedApplication(e) {
   // フォームの送信内容の取得
-  const email = (e !== undefined) ? e.response.getRespondentEmail() : FormApp.getActiveForm().getResponses()[0].getRespondentEmail();
-  const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[0].getItemResponses();
+  const email = (e !== undefined) ? e.response.getRespondentEmail() : FormApp.getActiveForm().getResponses()[1].getRespondentEmail();
+  const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[1].getItemResponses();
   // const email = e.response.getRespondentEmail();
   // const responses = e.response.getItemResponses();
 
@@ -36,6 +36,10 @@ function receivedApplication(e) {
   const start_time = responses[3 + rebook].getResponse();
   const end_time = responses[4 + rebook].getResponse();
   const dateTime_str = date + " "  + start_time + "~" + end_time;
+
+  if (pre_code !== "") {
+    checkCode(pre_code);
+  }
 
   // 予約可能かチェック
   const results = checkReservable(room, date, start_time, end_time);
