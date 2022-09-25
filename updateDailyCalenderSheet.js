@@ -2,7 +2,7 @@ const days = ["日", "月", "火", "水", "木", "金", "土"];
 
 
 // 前日分までのデータを削除して、1年後までの日付を入力
-function updateCalenderSheet() {
+function updateDailyCalenderSheet() {
   // トリガーの削除
   delTrigger();
 
@@ -25,8 +25,8 @@ function updateCalenderSheet() {
   // 履歴に追加
   for (let i = 0; i < count; i++) {
     RESERVATION_RECORD.insertRowBefore(3);
-    const values = RESERVATION_STATUS.getRange(3, 1, 3, RESERVATION_STATUS.getLastColumn()).getValues();
-    RESERVATION_RECORD.getRange(3, 3, 3, RESERVATION_RECORD.getLastColumn()).setValues(values);
+    const values = RESERVATION_STATUS.getRange(3, 1, 1, RESERVATION_STATUS.getLastColumn()).getValues();
+    RESERVATION_RECORD.getRange(3, 1, 1, RESERVATION_RECORD.getLastColumn()).setValues(values);
   }
 
   // データ削除

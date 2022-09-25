@@ -17,7 +17,7 @@ const RECORD_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperti
 const ERRORCODE_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("errorCode_sheet_id"));
 const RESERVATION_STATUS = CALENDER_SHEET.getSheetByName("予約状況");
 const RESERVATION_APPLICATION = APPLICATION_SHEET.getSheetByName("予約申請");
-const RESERVATION_RECORD = APPLICATION_SHEET.getSheetByName("履歴");
+const RESERVATION_RECORD = RECORD_SHEET.getSheetByName("履歴");
 const ERRORCODES = ERRORCODE_SHEET.getSheetByName("エラーコード");
 
 let ErrorCode = "";
@@ -44,6 +44,19 @@ function receivedApplication(e) {
   const end_time = responses[4 + changeReservation].getResponse();
   const dateTime_str = date + " "  + start_time + "~" + end_time;
 
+  // 予約可能かチェック
+  const results = checkReservable(room, date, start_time, end_time);
+
+  // EA200-001 ~ EA202-001
+  if (ErrorCode !== "") {
+    sendEmail(0, email);
+    return;
+  }
+
+  const check = results[0];
+  const date_index = results[1];
+  const room_index = results[2];
+
   let changeReservation_flag = false;
   if (pre_code !== "") {
     // 予約コードのチェック
@@ -57,19 +70,6 @@ function receivedApplication(e) {
 
     changeReservation_flag = true;
   }
-
-  // 予約可能かチェック
-  const results = checkReservable(room, date, start_time, end_time);
-
-  // EA200-001 ~ EA202-001
-  if (ErrorCode !== "") {
-     sendEmail(0, email);
-    return;
-  }
-
-  const check = results[0];
-  const date_index = results[1];
-  const room_index = results[2];
 
   // 予約コード作成
   const code = createCode(4);

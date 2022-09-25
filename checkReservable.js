@@ -26,7 +26,7 @@ function checkReservable(room, date, start_time, end_time) {
               const pre_start_time = reservations[i].slice(-11, -6);
               const pre_end_time = reservations[i].slice(-5);
 
-              // 予約時間の重複
+              // 予約時間の重複(同一なものは無視)
               if (start_time < pre_end_time && pre_start_time < end_time) {
                 ErrorCode = "EA202-001";
                 return [false, null, null];
