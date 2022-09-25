@@ -14,40 +14,59 @@ const ROOM_LIST = [
 const CALENDER_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("calender_sheet_id"));
 const APPLICATION_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("application_sheet_id"));
 const RECORD_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("record_sheet_id"));
+const ERRORCODE_SHEET = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("errorCode_sheet_id"));
 const RESERVATION_STATUS = CALENDER_SHEET.getSheetByName("予約状況");
 const RESERVATION_APPLICATION = APPLICATION_SHEET.getSheetByName("予約申請");
 const RESERVATION_RECORD = APPLICATION_SHEET.getSheetByName("履歴");
+const ERRORCODES = ERRORCODE_SHEET.getSheetByName("エラーコード");
+
+let ErrorCode = "";
 
 
 // フォーム送信時
 function receivedApplication(e) {
   // フォームの送信内容の取得
-  const email = (e !== undefined) ? e.response.getRespondentEmail() : FormApp.getActiveForm().getResponses()[1].getRespondentEmail();
-  const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[1].getItemResponses();
+  const email = (e !== undefined) ? e.response.getRespondentEmail() : FormApp.getActiveForm().getResponses()[0].getRespondentEmail();
+  const responses = (e !== undefined) ? e.response.getItemResponses() : FormApp.getActiveForm().getResponses()[0].getItemResponses();
   // const email = e.response.getRespondentEmail();
   // const responses = e.response.getItemResponses();
 
-  let rebook = 0;
+  let changeReservation = 0;
   let pre_code = "";
   if (responses.length == 6) {
-    rebook = 1;
+    changeReservation = 1;
     pre_code = responses[0].getResponse();
   }
-  const group_name = responses[0 + rebook].getResponse();
-  const room = responses[1 + rebook].getResponse();
-  const date = Utilities.formatDate(new Date(responses[2 + rebook].getResponse()), "Asia/Tokyo", "yyyy-MM-dd");
-  const start_time = responses[3 + rebook].getResponse();
-  const end_time = responses[4 + rebook].getResponse();
+  const group_name = responses[0 + changeReservation].getResponse();
+  const room = responses[1 + changeReservation].getResponse();
+  const date = Utilities.formatDate(new Date(responses[2 + changeReservation].getResponse()), "Asia/Tokyo", "yyyy-MM-dd");
+  const start_time = responses[3 + changeReservation].getResponse();
+  const end_time = responses[4 + changeReservation].getResponse();
   const dateTime_str = date + " "  + start_time + "~" + end_time;
 
-  let rebook_flag = false;
+  let changeReservation_flag = false;
   if (pre_code !== "") {
+    // 予約コードのチェック
     checkCode(pre_code);
-    rebook_flag = true;
+
+    // EA100-001
+    if (ErrorCode !== "") {
+      sendEmail(0, email);
+      return;
+    }
+
+    changeReservation_flag = true;
   }
 
   // 予約可能かチェック
   const results = checkReservable(room, date, start_time, end_time);
+
+  // EA200-001 ~ EA202-001
+  if (ErrorCode !== "") {
+     sendEmail(0, email);
+    return;
+  }
+
   const check = results[0];
   const date_index = results[1];
   const room_index = results[2];
@@ -58,28 +77,11 @@ function receivedApplication(e) {
   // 予約可能なら
   if (check){
     // 予約申請シートに予約内容を書き込む
-    addReservationApplication(code, email, group_name, room, dateTime_str);
+    updateReservationApplication(code, email, group_name, room, dateTime_str);
 
     // 予約状況シートの更新
-    updateReservationStatus(group_name, start_time, end_time, date_index, room_index);
+    updateCalenderSheet(group_name, start_time, end_time, date_index, room_index);
   }
 
-  sendEmail(email, check, rebook_flag, code, group_name, room, dateTime_str);
-}
-
-
-function addReservationApplication(hash, email, group_name, room, time) {
-  RESERVATION_APPLICATION.appendRow([hash, email, room, group_name, time]);
-}
-
-
-function updateReservationStatus(group_name, start_time, end_time, date_index, room_index) {
-  // 更新前のデータ取得
-  const pre_value =　RESERVATION_STATUS.getRange(date_index, room_index).getValue();
-
-  // 更新データ作成
-  const time_str = start_time + "~" + end_time;
-  const value = (pre_value === "") ? group_name + " " + time_str : pre_value + "\n" + group_name + " " + time_str;
-
-  RESERVATION_STATUS.getRange(date_index, room_index).setValue(value);
+  sendEmail(1, email, changeReservation_flag, code, group_name, room, dateTime_str);
 }

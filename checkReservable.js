@@ -1,4 +1,11 @@
 function checkReservable(room, date, start_time, end_time) {
+  // 入力時間帯が無効かどうか
+  if (start_time > end_time) {
+    ErrorCode = "EA201-001";
+    return [false, null, null];
+  }
+
+
   // 予約状況シートからデータを取得
   const reservations_list = getDataOfReservationStatus(3, 1);
 
@@ -19,7 +26,9 @@ function checkReservable(room, date, start_time, end_time) {
               const pre_start_time = reservations[i].slice(-11, -6);
               const pre_end_time = reservations[i].slice(-5);
 
+              // 予約時間の重複
               if (start_time < pre_end_time && pre_start_time < end_time) {
+                ErrorCode = "EA202-001";
                 return [false, null, null];
               }
             }
@@ -31,7 +40,8 @@ function checkReservable(room, date, start_time, end_time) {
     }
   }
 
-  // 条件が合わないならNG
+  // 日付の不正入力
+  ErrorCode = "EA200-001";
   return [false, null, null];
 }
 
